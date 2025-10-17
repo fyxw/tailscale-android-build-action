@@ -82,7 +82,7 @@ jobs:
               --output=tailscale-arm64v8a.apks \
               --ks=$JKS_PATH \
               --ks-key-alias=tailscale \
-              --ks-pass="pass:${JKS_PASSWORD}"
+              --ks-pass="pass:${JKS_PASSWORD}" \
               --device-spec=../device-spec.json
           java -jar ../bundletool.jar build-apks \
               --bundle=tailscale-release.aab \
