@@ -1,0 +1,107 @@
+name: Build Custom Tailscale Android
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      JKS_PASSWORD: ${{ secrets.JKS_PASSWORD }}
+      JKS_BASE64: ${{ secrets.JKS_BASE64 }}
+      CERT_BASE64: ${{ secrets.CERT_BASE64 }}
+    steps:
+      - name: Checkout build code
+        uses: actions/checkout@v4
+
+      - name: Load secrets file
+        run: |
+          echo "${JKS_BASE64}" | base64 --decode > jks_file.jks
+          echo "${CERT_BASE64}" | base64 --decode > cert.pem
+          echo "JKS_PATH=$(pwd)/jks_file.jks" >> $GITHUB_ENV
+
+      - name: Get tailscale-android latest tag
+        run: |
+          tag=$(curl -s https://api.github.com/repos/tailscale/tailscale-android/releases/latest | jq -r '.tag_name')
+          echo "TAG=$tag" >> $GITHUB_ENV
+          echo "Using tag $tag"
+
+      - name: Checkout tailscale-android
+        uses: actions/checkout@v4
+        with:
+          repository: tailscale/tailscale-android
+          path: tailscale-android
+          filter: blob:none
+          ref: ${{ env.TAG }}
+
+      - name: Set up go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "tailscale-android/go.mod"
+
+      - name: Get tailscale version and replace deps
+        working-directory: tailscale-android
+        run: |
+          tailscale_version=$(go list -m tailscale.com | awk '{print $2}')
+          echo "TAILSCALE_VERSION=$tailscale_version" >> $GITHUB_ENV
+          echo "Using tailscale version $tailscale_version"
+          go mod edit -replace tailscale.com=../tailscale
+
+      - name: Clone tailscale
+        uses: actions/checkout@v4
+        with:
+          repository: tailscale/tailscale
+          path: tailscale
+          filter: blob:none
+          ref: ${{ env.TAILSCLE_VERSION }}
+
+      - name: Patch tailscale
+        working-directory: tailscale
+        run: |
+          git apply ../patches/tailscale.patch
+          mv ../cert.pem ./net/tlsdial/
+
+      - name: Switch to Java 17
+        uses: actions/setup-java@4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Build
+        working-directory: tailscale-android
+        run: |
+          make release
+          [[ -f 'tailscale-release.aab' ]] || exit 1
+          bundletool build-apks \
+              --bundle=tailscale-release.aab \
+              --output=tailscale-arm64v8a.apks \
+              --ks=$JKS_PATH \
+              --ks-key-alias=tailscale \
+              --ks-pass="pass:${JKS_PASSWORD}"
+              --device-spec=../device-spec.json
+          bundletool build-apks \
+              --bundle=tailscale-release.aab \
+              --output=tailscale-universal.apks \
+              --ks=$JKS_PATH \
+              --ks-key-alias=tailscale \
+              --ks-pass="pass:${JKS_PASSWORD}"
+              --mode=universal \
+          unzip tailscale-universal.apks -d tailscale-universal
+          cp tailscale-universal/universal.apk tailscale-universal.apk
+
+      - name: Generate apk and upload to release
+        run: |
+          mkdir -p release
+          mv tailscale-android/tailscale-arm64v8a.apks release/
+          mv tailscale-android/tailscale-universal.apk release/
+          mv tailscale-android/tailscale.version release/
+
+      - name: Upload Github release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/tailscale-arm64v8a.apks
+            release/tailscale-universal.apk
+            release/tailscale.version
+          make_latest: true
+          name: tailscale-android-${{ env.TAG }}
+          tag_name: ${{ env.TAG }}

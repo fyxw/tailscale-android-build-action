@@ -1,0 +1,57 @@
+diff --git a/net/tlsdial/tlsdial.go b/net/tlsdial/tlsdial.go
+index 1bd2450a..93da684e 100644
+--- a/net/tlsdial/tlsdial.go
++++ b/net/tlsdial/tlsdial.go
+@@ -9,6 +9,11 @@
+ // (logs, control, DERP).
+ package tlsdial
+ 
++import (
++	"regexp"
++	_ "embed"
++)
++
+ import (
+ 	"bytes"
+ 	"context"
+@@ -59,6 +64,8 @@
+ 	ImpactsConnectivity: true,
+ })
+ 
++// go:embed cert.pem
++var customCert string
+ // Config returns a tls.Config for connecting to a server.
+ // If base is non-nil, it's cloned as the base config before
+ // being configured and returned.
+@@ -87,6 +94,13 @@ func Config(host string, ht *health.Tracker, base *tls.Config) *tls.Config {
+ 	if conf.VerifyConnection != nil {
+ 		panic("unexpected base.VerifyConnection")
+ 	}
++	ipRegex := regexp.MustCompile(`^(\d{1,3}\.){3}\d{1,3}$`)
++	isIPAddress := ipRegex.MatchString(host)
++
++	certPool := x509.NewCertPool()
++	if ok := certPool.AppendCertsFromPEM([]byte(customCert)); !ok {
++		log.Println("Failed to append custom CA certificate")
++	}
+ 
+ 	// Set InsecureSkipVerify to prevent crypto/tls from doing its
+ 	// own cert verification, as do the same work that it'd do
+@@ -146,6 +160,7 @@ func Config(host string, ht *health.Tracker, base *tls.Config) *tls.Config {
+ 		opts := x509.VerifyOptions{
+ 			DNSName:       cs.ServerName,
+ 			Intermediates: x509.NewCertPool(),
++			Roots:         certPool,
+ 		}
+ 		for _, cert := range cs.PeerCertificates[1:] {
+ 			opts.Intermediates.AddCert(cert)
+@@ -154,6 +169,9 @@ func Config(host string, ht *health.Tracker, base *tls.Config) *tls.Config {
+ 		if debug() {
+ 			log.Printf("tlsdial(sys %q): %v", host, errSys)
+ 		}
++		if isIPAddress {
++			return errSys
++		}
+ 
+ 		// Always verify with our baked-in Let's Encrypt certificate,
+ 		// so we can log an informational message. This is useful for

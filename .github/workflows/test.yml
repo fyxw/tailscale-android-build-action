@@ -1,0 +1,15 @@
+name: test
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: update tailscale version
+        id: ver
+        run: |
+          tag=$(curl -s 'https://api.github.com/repos/tailscale/tailscale-android/releases/latest' | jq '.tag_name')
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "Using release: $tag"
+
+
