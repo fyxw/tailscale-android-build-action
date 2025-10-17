@@ -38,20 +38,13 @@ jobs:
           filter: blob:none
           ref: ${{ env.TAG }}
 
-      - name: Set up go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: "tailscale-android/go.mod"
-          cache-dependency-path: |
-            tailscale-android/go.sum
-
       - name: Get tailscale version and replace deps
         working-directory: tailscale-android
         run: |
-          tailscale_version=$(go list -m tailscale.com | awk '{print $2}')
+          tailscale_version=$(cat go.mod | grep 'tailscale.com' | awk '{print $2}')
           echo "TAILSCALE=$tailscale_version" >> $GITHUB_ENV
           echo "Using tailscale version $tailscale_version"
-          go mod edit -replace tailscale.com=../tailscale
+          echo -e '\nreplace tailscale.com => ../tailscale' >> go.mod
 
       - name: Clone tailscale
         uses: actions/checkout@v4
@@ -60,6 +53,14 @@ jobs:
           path: tailscale
           filter: blob:none
           ref: ${{ env.TAILSCALE }}
+
+      - name: Set up go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "tailscale-android/go.mod"
+          cache-dependency-path: |
+            tailscale-android/go.sum
+            tailscale/go.mod
 
       - name: Patch tailscale
         working-directory: tailscale
@@ -74,8 +75,8 @@ jobs:
           java-version: "17"
           cache: "gradle"
           cache-dependency-path: |
-            tailscale-android/android/*.gradle*
-            tailscale-android/android/**/gradle-wrapper.properties
+            tailscale-android/android/*.gradle
+            tailscale-android/android/**/
 
       - name: Build
         working-directory: tailscale-android
