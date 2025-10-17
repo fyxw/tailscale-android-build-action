@@ -42,7 +42,7 @@ jobs:
         working-directory: tailscale-android
         run: |
           tailscale_version=$(go list -m tailscale.com | awk '{print $2}')
-          echo "TAILSCALE_VERSION=$tailscale_version" >> $GITHUB_ENV
+          echo "TAILSCALE=$tailscale_version" >> $GITHUB_ENV
           echo "Using tailscale version $tailscale_version"
           go mod edit -replace tailscale.com=../tailscale
 
@@ -52,7 +52,7 @@ jobs:
           repository: tailscale/tailscale
           path: tailscale
           filter: blob:none
-          ref: ${{ env.TAILSCALE_VERSION }}
+          ref: ${{ env.TAILSCALE }}
 
       - name: Patch tailscale
         working-directory: tailscale
