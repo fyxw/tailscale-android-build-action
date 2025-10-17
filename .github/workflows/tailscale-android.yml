@@ -18,6 +18,7 @@ jobs:
           echo "${JKS_BASE64}" | base64 --decode > jks_file.jks
           echo "${CERT_BASE64}" | base64 --decode > cert.pem
           echo "JKS_PATH=$(pwd)/jks_file.jks" >> $GITHUB_ENV
+          echo "TS_MKVERSION_OSS_GIT_CACHE=$(pwd/tailscale)" >> $GITHUB_ENV
           json=$(curl -s https://api.github.com/repos/google/bundletool/releases/latest)
           downloadUrl=$(echo $json | jq -r ".assets | .[].browser_download_url")
           curl $downloadUrl -4 -sL -o 'bundletool.jar'
@@ -71,10 +72,15 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "17"
+          cache: "gradle"
+          cache-dependency-path: |
+            tailscale-android/android/*.gradle*
+            tailscale-android/android/**/gradle-wrapper.properties
 
       - name: Build
         working-directory: tailscale-android
         run: |
+          go run ../tailscale/cmd/mkversion > tailscale.version
           make release
           [[ -f 'tailscale-release.aab' ]] || exit 1
           java -jar ../bundletool.jar build-apks \
@@ -89,7 +95,7 @@ jobs:
               --output=tailscale-universal.apks \
               --ks=$JKS_PATH \
               --ks-key-alias=tailscale \
-              --ks-pass="pass:${JKS_PASSWORD}"
+              --ks-pass="pass:${JKS_PASSWORD}" \
               --mode=universal \
           unzip tailscale-universal.apks -d tailscale-universal
           cp tailscale-universal/universal.apk tailscale-universal.apk
