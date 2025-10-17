@@ -52,7 +52,7 @@ jobs:
           repository: tailscale/tailscale
           path: tailscale
           filter: blob:none
-          ref: ${{ env.TAILSCLE_VERSION }}
+          ref: ${{ env.TAILSCALE_VERSION }}
 
       - name: Patch tailscale
         working-directory: tailscale
