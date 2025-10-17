@@ -13,11 +13,15 @@ jobs:
       - name: Checkout build code
         uses: actions/checkout@v4
 
-      - name: Load secrets file
+      - name: Load secrets file and download bundletool
         run: |
           echo "${JKS_BASE64}" | base64 --decode > jks_file.jks
           echo "${CERT_BASE64}" | base64 --decode > cert.pem
           echo "JKS_PATH=$(pwd)/jks_file.jks" >> $GITHUB_ENV
+          json=$(curl -s https://api.github.com/repos/google/bundletool/releases/latest)
+          downloadUrl=$(echo $json | jq -r ".assets | .[].browser_download_url")
+          curl $downloadUrl -4 -sL -o 'bundletool.jar'
+          java -jar bundletool.jar version
 
       - name: Get tailscale-android latest tag
         run: |
@@ -71,14 +75,14 @@ jobs:
         run: |
           make release
           [[ -f 'tailscale-release.aab' ]] || exit 1
-          bundletool build-apks \
+          java -jar ../bundletool.jar build-apks \
               --bundle=tailscale-release.aab \
               --output=tailscale-arm64v8a.apks \
               --ks=$JKS_PATH \
               --ks-key-alias=tailscale \
               --ks-pass="pass:${JKS_PASSWORD}"
               --device-spec=../device-spec.json
-          bundletool build-apks \
+          java -jar ../bundletool.jar build-apks \
               --bundle=tailscale-release.aab \
               --output=tailscale-universal.apks \
               --ks=$JKS_PATH \
