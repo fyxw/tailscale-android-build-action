@@ -96,7 +96,7 @@ jobs:
               --ks=$JKS_PATH \
               --ks-key-alias=tailscale \
               --ks-pass="pass:${JKS_PASSWORD}" \
-              --mode=universal \
+              --mode=universal
           unzip tailscale-universal.apks -d tailscale-universal
           cp tailscale-universal/universal.apk tailscale-universal.apk
 
