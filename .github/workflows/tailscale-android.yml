@@ -41,6 +41,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: "tailscale-android/go.mod"
+          cache-dependency-path: |
+            tailscale-android/go.sum
 
       - name: Get tailscale version and replace deps
         working-directory: tailscale-android
