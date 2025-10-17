@@ -17,7 +17,7 @@ index 80f3bfc0..5d85b11d 100644
  	ImpactsConnectivity: true,
  })
  
-+// go:embed cert.pem
++//go:embed cert.pem
 +var customCert string
 +
  // Config returns a tls.Config for connecting to a server that

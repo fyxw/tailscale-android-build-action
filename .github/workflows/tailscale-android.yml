@@ -116,5 +116,6 @@ jobs:
             release/tailscale-universal.apk
             release/tailscale.version
           make_latest: true
-          name: tailscale-android-${{ env.TAG }}
+          name: tailscale-android
           tag_name: ${{ env.TAG }}
+          body: build custom tailscale-android-${{ env.TAG }}
