@@ -1,60 +1,34 @@
-diff --git a/net/tlsdial/tlsdial.go b/net/tlsdial/tlsdial.go
-index ee4771d8..de4b1059 100644
---- a/net/tlsdial/tlsdial.go
-+++ b/net/tlsdial/tlsdial.go
-@@ -9,6 +9,10 @@
- // (logs, control, DERP).
- package tlsdial
+diff --git a/net/bakedroots/bakedroots.go b/net/bakedroots/bakedroots.go
+index b268b154..288eb719 100644
+--- a/net/bakedroots/bakedroots.go
++++ b/net/bakedroots/bakedroots.go
+@@ -5,6 +5,9 @@
+ // lest the system's CA roots be missing them (or entirely empty).
+ package bakedroots
  
 +import (
-+	"regexp"
 +	_ "embed"
 +)
  import (
- 	"bytes"
- 	"context"
-@@ -54,6 +58,9 @@
- 	ImpactsConnectivity: true,
- })
- 
+ 	"crypto/x509"
+ 	"fmt"
+@@ -18,10 +21,10 @@
+ // As of 2025-01-21, this includes only the LetsEncrypt ISRG Root X1 & X2 roots.
+ func Get() *x509.CertPool {
+ 	roots.once.Do(func() {
+-		roots.parsePEM(append(
++		roots.parsePEM(append(append(
+ 			[]byte(letsEncryptX1),
+ 			letsEncryptX2...,
+-		))
++		),customCert...))
+ 	})
+ 	return roots.p
+ }
+@@ -145,3 +148,6 @@ func (r *rootsOnce) parsePEM(caPEM []byte) {
+ /q4AaOeMSQ+2b1tbFfLn
+ -----END CERTIFICATE-----
+ `
++
 +//go:embed cert.pem
 +var customCert string
-+
- // Config returns a tls.Config for connecting to a server that
- // uses system roots for validation but, if those fail, also tries
- // the baked-in LetsEncrypt roots as a fallback validation method.
-@@ -97,6 +104,13 @@ func Config(ht *health.Tracker, base *tls.Config) *tls.Config {
- 		panic("unexpected base.VerifyConnection")
- 	}
- 
-+	ipRegex := regexp.MustCompile(`^(\d{1,3}\.){3}\d{1,3}$`)
-+
-+	certPool := x509.NewCertPool()
-+	if ok := certPool.AppendCertsFromPEM([]byte(customCert)); !ok {
-+		log.Println("Failed to append custom CA certificate")
-+	}
-+
- 	// Set InsecureSkipVerify to prevent crypto/tls from doing its
- 	// own cert verification, as do the same work that it'd do
- 	// (with the baked-in fallback root) in the VerifyConnection hook.
-@@ -157,6 +171,7 @@ func Config(ht *health.Tracker, base *tls.Config) *tls.Config {
- 		opts := x509.VerifyOptions{
- 			DNSName:       dialedHost,
- 			Intermediates: x509.NewCertPool(),
-+			Roots:         certPool,
- 		}
- 		for _, cert := range cs.PeerCertificates[1:] {
- 			opts.Intermediates.AddCert(cert)
-@@ -165,6 +180,12 @@ func Config(ht *health.Tracker, base *tls.Config) *tls.Config {
- 		if debug() {
- 			log.Printf("tlsdial(sys %q): %v", dialedHost, errSys)
- 		}
-+
-+		isIPAddress := ipRegex.MatchString(dialedHost)
-+		if isIPAddress {
-+			return errSys
-+		}
-+
- 		if !buildfeatures.HasBakedRoots || (errSys == nil && !debug()) {
- 			return errSys
- 		}
