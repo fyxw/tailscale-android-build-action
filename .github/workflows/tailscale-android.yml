@@ -76,7 +76,7 @@ jobs:
           cache: "gradle"
           cache-dependency-path: |
             tailscale-android/android/*.gradle
-            tailscale-android/android/**/
+            tailscale-android/android/**/gradle-wrapper.properties
 
       - name: Build
         working-directory: tailscale-android
