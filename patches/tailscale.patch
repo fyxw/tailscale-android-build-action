@@ -1,5 +1,5 @@
 diff --git a/net/tlsdial/tlsdial.go b/net/tlsdial/tlsdial.go
-index 80f3bfc0..5d85b11d 100644
+index ee4771d8..de4b1059 100644
 --- a/net/tlsdial/tlsdial.go
 +++ b/net/tlsdial/tlsdial.go
 @@ -9,6 +9,10 @@
@@ -13,7 +13,7 @@ index 80f3bfc0..5d85b11d 100644
  import (
  	"bytes"
  	"context"
-@@ -59,6 +63,9 @@
+@@ -54,6 +58,9 @@
  	ImpactsConnectivity: true,
  })
  
@@ -23,7 +23,7 @@ index 80f3bfc0..5d85b11d 100644
  // Config returns a tls.Config for connecting to a server that
  // uses system roots for validation but, if those fail, also tries
  // the baked-in LetsEncrypt roots as a fallback validation method.
-@@ -96,6 +103,13 @@ func Config(ht *health.Tracker, base *tls.Config) *tls.Config {
+@@ -97,6 +104,13 @@ func Config(ht *health.Tracker, base *tls.Config) *tls.Config {
  		panic("unexpected base.VerifyConnection")
  	}
  
@@ -37,7 +37,7 @@ index 80f3bfc0..5d85b11d 100644
  	// Set InsecureSkipVerify to prevent crypto/tls from doing its
  	// own cert verification, as do the same work that it'd do
  	// (with the baked-in fallback root) in the VerifyConnection hook.
-@@ -156,6 +170,7 @@ func Config(ht *health.Tracker, base *tls.Config) *tls.Config {
+@@ -157,6 +171,7 @@ func Config(ht *health.Tracker, base *tls.Config) *tls.Config {
  		opts := x509.VerifyOptions{
  			DNSName:       dialedHost,
  			Intermediates: x509.NewCertPool(),
@@ -45,15 +45,16 @@ index 80f3bfc0..5d85b11d 100644
  		}
  		for _, cert := range cs.PeerCertificates[1:] {
  			opts.Intermediates.AddCert(cert)
-@@ -165,6 +180,11 @@ func Config(ht *health.Tracker, base *tls.Config) *tls.Config {
+@@ -165,6 +180,12 @@ func Config(ht *health.Tracker, base *tls.Config) *tls.Config {
+ 		if debug() {
  			log.Printf("tlsdial(sys %q): %v", dialedHost, errSys)
  		}
- 
++
 +		isIPAddress := ipRegex.MatchString(dialedHost)
 +		if isIPAddress {
 +			return errSys
 +		}
 +
- 		// Always verify with our baked-in Let's Encrypt certificate,
- 		// so we can log an informational message. This is useful for
- 		// detecting SSL MiTM.
+ 		if !buildfeatures.HasBakedRoots || (errSys == nil && !debug()) {
+ 			return errSys
+ 		}
