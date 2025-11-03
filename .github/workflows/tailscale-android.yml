@@ -1,4 +1,4 @@
-name: Build Custom Tailscale Android
+name: Build
 on:
   workflow_dispatch:
 
