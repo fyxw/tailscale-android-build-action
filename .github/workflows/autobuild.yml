@@ -1,0 +1,36 @@
+name: Auto-build
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      need_update: ${{ steps.compare.outputs.need_update }}
+    steps:
+      - name: Get tailscale-android latest tag
+        run: |
+          tag=$(curl -s https://api.github.com/repos/tailscale/tailscale-android/releases/latest | jq -r '.tag_name')
+          echo "LATEST_TAG=$tag" >> $GITHUB_ENV
+      - name: Get current latest tag
+        run: |
+          tag=$(curl -s 'https://api.github.com/repos/${{ github.repository }}/tailscale-android/releases/latest' | jq -r '.tag_name')
+          echo "CURRENT_TAG=$tag" >> $GITHUB_ENV
+      - name: compare tag
+        id: compare
+        run: |
+          if [[ "${{ env.LATEST_TAG }}" != "${{ env.CURRENT_TAG }}" ]];then
+            echo "need_update=yes" >> $GITHUB_OUTPUT
+          else
+            echo "need_update=no" >> $GITHUB_OUTPUT
+          fi
+          echo "LATEST_TAG: ${{ env.LATEST_TAG }}"
+          echo "CURRENT_TAG: ${{ env.CURRENT_TAG }}"
+
+  build:
+    needs: check
+    if: ${{ needs.check.outputs.need_update == 'yes' }}
+    runs-on: ubuntu-latest
+    steps:
+     - uses: ./.github/workflows/tailscale-android.yml
