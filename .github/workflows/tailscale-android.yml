@@ -54,13 +54,13 @@ jobs:
           filter: blob:none
           ref: ${{ env.TAILSCALE }}
 
-      - name: Set up go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: "tailscale-android/go.mod"
-          cache-dependency-path: |
-            tailscale-android/go.sum
-            tailscale/go.mod
+      # - name: Set up go
+      #   uses: actions/setup-go@v5
+      #   with:
+      #     go-version-file: "tailscale-android/go.mod"
+      #     cache-dependency-path: |
+      #       tailscale-android/go.sum
+      #       tailscale/go.mod
 
       - name: Patch tailscale
         working-directory: tailscale
@@ -81,7 +81,7 @@ jobs:
       - name: Build
         working-directory: tailscale-android
         run: |
-          go run ../tailscale/cmd/mkversion > tailscale.version
+          ./tool/go run ../tailscale/cmd/mkversion > tailscale.version
           make release
           [[ -f 'tailscale-release.aab' ]] || exit 1
           java -jar ../bundletool.jar build-apks \
