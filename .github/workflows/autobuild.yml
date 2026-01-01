@@ -15,7 +15,7 @@ jobs:
           echo "LATEST_TAG=$tag" >> $GITHUB_ENV
       - name: Get current latest tag
         run: |
-          tag=$(curl -s 'https://api.github.com/repos/${{ github.repository }}/tailscale-android/releases/latest' | jq -r '.tag_name')
+          tag=$(curl -s 'https://api.github.com/repos/${{ github.repository }}/releases/latest' | jq -r '.tag_name')
           echo "CURRENT_TAG=$tag" >> $GITHUB_ENV
       - name: compare tag
         id: compare
@@ -33,4 +33,5 @@ jobs:
     if: ${{ needs.check.outputs.need_update == 'yes' }}
     runs-on: ubuntu-latest
     steps:
-     - uses: ./.github/workflows/tailscale-android.yml
+      - uses: actions/checkout@v4
+      - uses: ./.github/workflows/tailscale-android.yml
