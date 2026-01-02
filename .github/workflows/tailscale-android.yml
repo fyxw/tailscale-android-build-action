@@ -10,6 +10,7 @@ jobs:
       JKS_BASE64: ${{ secrets.JKS_BASE64 }}
       CERT_BASE64: ${{ secrets.CERT_BASE64 }}
       ANDROID_SDK_ROOT: ~/Android/Sdk
+      ANDROID_HOME: ~/Android/Sdk
     steps:
       - name: Checkout build code
         uses: actions/checkout@v4
@@ -82,7 +83,9 @@ jobs:
       - name: Install androidsdk
         if: ${{ steps.cache-androidsdk.outputs.cache-hit != 'true' }}
         working-directory: tailscale-android
-        run: make androidsdk
+        run: |
+          echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
+          make androidsdk
 
       - name: Build
         working-directory: tailscale-android
