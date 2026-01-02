@@ -9,7 +9,7 @@ jobs:
       JKS_PASSWORD: ${{ secrets.JKS_PASSWORD }}
       JKS_BASE64: ${{ secrets.JKS_BASE64 }}
       CERT_BASE64: ${{ secrets.CERT_BASE64 }}
-      ANDROID_SDK_ROOT: ~/Android
+      ANDROID_SDK_ROOT: ~/Android/Sdk
     steps:
       - name: Checkout build code
         uses: actions/checkout@v4
@@ -24,6 +24,7 @@ jobs:
           downloadUrl=$(echo $json | jq -r ".assets | .[].browser_download_url")
           curl $downloadUrl -4 -sL -o 'bundletool.jar'
           java -jar bundletool.jar version
+          mkdir -p $ANDROID_SDK_ROOT
 
       - name: Get tailscale-android latest tag
         run: |
@@ -75,7 +76,7 @@ jobs:
         id: cache-androidsdk
         uses: actions/cache@v5
         with:
-          path: ~/Android
+          path: ~/Android/Sdk
           key: androidsdk-${{ runner.os }}-${{ hashFiles('tailscale-android/Makefile') }}
 
       - name: Install androidsdk
