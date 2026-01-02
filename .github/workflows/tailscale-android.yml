@@ -9,8 +9,8 @@ jobs:
       JKS_PASSWORD: ${{ secrets.JKS_PASSWORD }}
       JKS_BASE64: ${{ secrets.JKS_BASE64 }}
       CERT_BASE64: ${{ secrets.CERT_BASE64 }}
-      ANDROID_SDK_ROOT: ~/Android/Sdk
-      ANDROID_HOME: ~/Android/Sdk
+      ANDROID_SDK_ROOT: /home/runner/Android/Sdk
+      ANDROID_HOME: /home/runner/Android/Sdk
     steps:
       - name: Checkout build code
         uses: actions/checkout@v4
