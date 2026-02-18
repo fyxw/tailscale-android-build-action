@@ -32,3 +32,4 @@ jobs:
     needs: check
     if: ${{ needs.check.outputs.need_update == 'yes' }}
     uses: ./.github/workflows/tailscale-android.yml
+    secrets: inherit
