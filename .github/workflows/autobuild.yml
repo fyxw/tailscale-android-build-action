@@ -31,7 +31,4 @@ jobs:
   build:
     needs: check
     if: ${{ needs.check.outputs.need_update == 'yes' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/workflows/tailscale-android.yml
+    uses: ./.github/workflows/tailscale-android.yml
