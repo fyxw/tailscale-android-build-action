@@ -12,6 +12,7 @@ jobs:
       CERT_BASE64: ${{ secrets.CERT_BASE64 }}
       ANDROID_SDK_ROOT: /home/runner/Android/Sdk
       ANDROID_HOME: /home/runner/Android/Sdk
+      ANDROID_NDK_HOME:
     steps:
       - name: Checkout build code
         uses: actions/checkout@v4
