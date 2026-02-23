@@ -7,7 +7,7 @@ jobs:
     env:
       ANDROID_SDK_ROOT: /home/runner/Android/Sdk
       ANDROID_HOME: /home/runner/Android/Sdk
-      ANDROID_NDK_HOME:
+      ANDROID_NDK_HOME: ""
     steps:
       - name: update tailscale version
         id: ver
