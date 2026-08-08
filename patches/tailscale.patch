@@ -1,32 +1,29 @@
 diff --git a/net/bakedroots/bakedroots.go b/net/bakedroots/bakedroots.go
-index b268b154..288eb719 100644
+index 84978995f..4113f03de 100644
 --- a/net/bakedroots/bakedroots.go
 +++ b/net/bakedroots/bakedroots.go
-@@ -5,6 +5,9 @@
+@@ -5,6 +5,10 @@
  // lest the system's CA roots be missing them (or entirely empty).
  package bakedroots
  
 +import (
 +	_ "embed"
 +)
++
  import (
  	"crypto/x509"
  	"fmt"
-@@ -18,10 +21,10 @@
- // As of 2025-01-21, this includes only the LetsEncrypt ISRG Root X1 & X2 roots.
+@@ -19,7 +23,7 @@
+ // the Generation X roots (X1 & X2) and the Generation Y roots (YE & YR).
  func Get() *x509.CertPool {
  	roots.once.Do(func() {
--		roots.parsePEM(append(
-+		roots.parsePEM(append(append(
- 			[]byte(letsEncryptX1),
- 			letsEncryptX2...,
--		))
-+		),customCert...))
+-		roots.parsePEM([]byte(letsEncryptX1 + letsEncryptX2 + letsEncryptYE + letsEncryptYR))
++		roots.parsePEM([]byte(letsEncryptX1 + letsEncryptX2 + letsEncryptYE + letsEncryptYR + customCert))
  	})
  	return roots.p
  }
-@@ -145,3 +148,6 @@ func (r *rootsOnce) parsePEM(caPEM []byte) {
- /q4AaOeMSQ+2b1tbFfLn
+@@ -203,3 +207,6 @@ func (r *rootsOnce) parsePEM(caPEM []byte) {
+ sI1ANRYvqSFC2X1VRZfDg+wD6E21BccmifG4yWc=
  -----END CERTIFICATE-----
  `
 +
