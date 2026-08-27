@@ -108,6 +108,7 @@ jobs:
       - name: Build
         working-directory: tailscale-android
         run: |
+          cp ../tailscale/go.toolchain.rev ./
           ./tool/go run ../tailscale/cmd/mkversion > tailscale.version
           make release
           [[ -f 'tailscale-release.aab' ]] || exit 1
