@@ -21,18 +21,18 @@ jobs:
         run: |
           echo "${JKS_BASE64}" | base64 --decode > jks_file.jks
           echo "${CERT_BASE64}" | base64 --decode > cert.pem
-          echo "JKS_PATH=$(pwd)/jks_file.jks" >> $GITHUB_ENV
-          echo "TS_MKVERSION_OSS_GIT_CACHE=$(pwd)/tailscale" >> $GITHUB_ENV
+          echo "JKS_PATH=$(pwd)/jks_file.jks" >> "$GITHUB_ENV"
+          echo "TS_MKVERSION_OSS_GIT_CACHE=$(pwd)/tailscale" >> "$GITHUB_ENV"
           json=$(curl -s https://api.github.com/repos/google/bundletool/releases/latest)
-          downloadUrl=$(echo $json | jq -r ".assets | .[].browser_download_url")
-          curl $downloadUrl -4 -sL -o 'bundletool.jar'
+          downloadUrl=$(echo "$json" | jq -r ".assets | .[].browser_download_url")
+          curl "$downloadUrl" -4 -sL -o 'bundletool.jar'
           java -jar bundletool.jar version
-          mkdir -p $ANDROID_SDK_ROOT
+          mkdir -p "$ANDROID_SDK_ROOT"
 
       - name: Get tailscale-android latest tag
         run: |
           tag=$(curl -s https://api.github.com/repos/tailscale/tailscale-android/releases/latest | jq -r '.tag_name')
-          echo "TAG=$tag" >> $GITHUB_ENV
+          echo "TAG=$tag" >> "$GITHUB_ENV"
           echo "Using tag $tag"
 
       - name: Checkout tailscale-android
@@ -47,7 +47,8 @@ jobs:
         working-directory: tailscale-android
         run: |
           tailscale_version=$(cat go.mod | grep 'tailscale.com' | awk '{print $2}')
-          echo "TAILSCALE=$tailscale_version" >> $GITHUB_ENV
+          # shellchecK disable=2086
+          echo "TAILSCALE=$tailscale_version" >> "$GITHUB_ENV"
           echo "Using tailscale version $tailscale_version"
           echo -e '\nreplace tailscale.com => ../tailscale' >> go.mod
 
@@ -115,14 +116,14 @@ jobs:
           java -jar ../bundletool.jar build-apks \
               --bundle=tailscale-release.aab \
               --output=tailscale-arm64v8a.apks \
-              --ks=$JKS_PATH \
+              --ks="$JKS_PATH" \
               --ks-key-alias=tailscale \
               --ks-pass="pass:${JKS_PASSWORD}" \
               --device-spec=../device-spec.json
           java -jar ../bundletool.jar build-apks \
               --bundle=tailscale-release.aab \
               --output=tailscale-universal.apks \
-              --ks=$JKS_PATH \
+              --ks="$JKS_PATH" \
               --ks-key-alias=tailscale \
               --ks-pass="pass:${JKS_PASSWORD}" \
               --mode=universal
@@ -137,7 +138,7 @@ jobs:
           mv tailscale-android/tailscale.version release/
 
       - name: Upload Github release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             release/tailscale-arm64v8a.apks
